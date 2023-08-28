@@ -1,14 +1,36 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+use std::path::PathBuf;
+
+use clap::{Parser, Subcommand};
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Cli {
+    /// Target architecture. (ex. x86-64, ARM, ...)
+    target_arch: String,
+
+    /// Target operating system. (ex. windows, linux, ...)
+    target_os: String,
+
+    /// Turn on debugging information.
+    #[arg(short, long, action = clap::ArgAction::Count)]
+    debug: u8,
+
+    /// Set the input file path.
+    #[arg(short, long)]
+    input: Option<PathBuf>,
+
+    /// Set the output file path.
+    #[arg(short, long)]
+    output: Option<PathBuf>,
+
+    #[command(subcommand)]
+    command: Option<Commands>,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[derive(Debug, Subcommand)]
+enum Commands {}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+pub fn run() {
+    let cli = Cli::parse();
+    println!("{cli:?}");
 }
