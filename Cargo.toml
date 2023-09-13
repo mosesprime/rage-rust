@@ -2,5 +2,6 @@
 resolver = "2"
 members = [
     "assembler/ragea",
+    "common/rage-ait",
     "compiler/ragec"
 ]
