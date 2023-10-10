@@ -15,8 +15,8 @@ impl Compiler {
 
     pub fn run(&self) -> io::Result<()> {
         let input = fs::read_to_string(&self.input)?.to_owned();
-        let lexer = ragec_lexer::Lexer::new();
-        let tokens = lexer.run(input.as_str());
+        let lexer = ragec_lexer::Lexer::new(input);
+        let tokens: Vec<ragec_lexer::LexicalToken> = lexer.tokenize().collect();
         println!("{tokens:?}");
         Ok(())
     }

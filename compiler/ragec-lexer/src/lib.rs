@@ -4,28 +4,33 @@ const EOF_CHAR: char = '\0';
 
 /// Lexical analyzer.
 pub struct Lexer {
+    input: String,
 }
 
 impl Lexer {
-    pub fn new() -> Self {
-        Self { }
+    /// 
+    pub fn new(input: impl ToString) -> Self {
+        Self { input: input.to_string() }
     }
 
-    // WIP
-    pub fn run(&self, input: &str) -> Vec<LexicalToken> {
-        let iter = tokenize(input);
-        Vec::from_iter(iter)
+    /// Returns an iterator of [`LexicalToken`] from the given input.
+    pub fn tokenize(&self) -> impl Iterator<Item = LexicalToken> + '_ {
+        let mut tokenizer = Tokenizer::new(self.input.chars());
+        std::iter::from_fn(move || {
+            let token = tokenizer.next();
+            if token.kind != LexicalTokenKind::EOF { Some(token) } else { None }
+        })
     }
 }
 
-/// Produce lexical token iterator.
+/** Produce lexical token iterator.
 fn tokenize(input: &str) -> impl Iterator<Item = LexicalToken> + '_ {
     let mut tokenizer = Tokenizer::new(input.chars());
     std::iter::from_fn(move || {
         let token = tokenizer.next();
         if token.kind != LexicalTokenKind::EOF { Some(token) } else { None }
     })
-}    
+}*/    
 
 struct Tokenizer<'a> {
     chars: Chars<'a>,
@@ -41,17 +46,37 @@ impl <'a>Tokenizer<'a> {
             Some(c) => c,
             None => {
                 if self.is_eof() {
+                    // no token but is end of file
                     return LexicalToken::new(LexicalTokenKind::EOF, 0);
                 } else {
+                    // no token yet is not the end of file
                     return LexicalToken::new(LexicalTokenKind::UNKNOWN, 0);
                 }
             },
         };
         let token = match first {
+            // whitespace
+            c if is_whitespace(c) => self.whitespace(),
+
+            '/' => match self.peek_first() {
+                '/' => self.line_comment(),
+                _ => self.symbol(),
+            }
+
+            '"' => self.string_literal(),
+
+            c if c.is_ascii_digit() => self.numeric_literal(),
+
+            c if is_term_start(c) => self.term(),
+
+            c if c.is_ascii_punctuation() => self.symbol(),
+
             EOF_CHAR => {
                 if self.is_eof() {
+                    // end of file
                     return LexicalToken::new(LexicalTokenKind::EOF, 0);
                 } else {
+                    // end of file token, but is not the end of the file
                     return LexicalToken::new(LexicalTokenKind::UNKNOWN, 1);
                 }
             },
@@ -80,6 +105,43 @@ impl <'a>Tokenizer<'a> {
     fn consume(&mut self) -> Option<char> {
         self.chars.next()
     }
+
+    /// wip
+    fn consume_while(&mut self, mut predicate: impl FnMut(char)->bool) -> usize {
+        let mut len = 0;
+        while predicate(self.peek_first()) && !self.is_eof() {
+            len += 1;
+            self.consume().unwrap();
+        }
+        return len;
+    }
+
+    fn whitespace(&mut self) -> LexicalToken {
+        let len = self.consume_while(is_whitespace);
+        LexicalToken::new(LexicalTokenKind::Whitespace, len + 1)
+    }
+
+    fn line_comment(&mut self) -> LexicalToken {
+        let len = self.consume_while(|c| c != '\n');
+        LexicalToken::new(LexicalTokenKind::Comment, len + 1) // add the length consumed plus the '/' already consumed
+    }
+
+    fn symbol(&mut self) -> LexicalToken {
+        LexicalToken::new(LexicalTokenKind::Symbol, 1)
+    }
+
+    fn string_literal(&mut self) -> LexicalToken { todo!() }
+
+    fn numeric_literal(&mut self) -> LexicalToken { 
+        LexicalToken::new(LexicalTokenKind::Literal, self.consume_while(|c| c.is_numeric()) + 1)
+    }
+
+    fn term(&mut self) -> LexicalToken { 
+        LexicalToken::new(
+            LexicalTokenKind::Term, 
+            self.consume_while(|c| is_term_continue(c)) + 1
+        )
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -87,11 +149,11 @@ pub struct LexicalToken {
     /// the kind of token
     pub kind: LexicalTokenKind,
     /// number of chars in token
-    pub length: u32,
+    pub length: usize,
 }
 
 impl LexicalToken {
-    pub fn new(kind: LexicalTokenKind, length: u32) -> Self {
+    pub fn new(kind: LexicalTokenKind, length: usize) -> Self {
         Self {
             kind,
             length,
@@ -161,4 +223,9 @@ fn is_term(string: &str) -> bool {
     } else {
         false
     }
+}
+
+/// is char a valid symbol
+fn is_symbol(c: char) -> bool {
+    c.is_ascii_punctuation() && c != '"'
 }

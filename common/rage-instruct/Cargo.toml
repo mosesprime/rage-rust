@@ -1,5 +1,5 @@
 [package]
-name = "rage-ait"
+name = "rage-instruct"
 version = "0.1.0"
 edition = "2021"
 
