@@ -60,7 +60,10 @@ impl <'a>Tokenizer<'a> {
 
             '"' => self.string_literal(),
 
-            c if c.is_ascii_digit() => self.numeric_literal(),
+            c if c.is_ascii_digit() => match self.peek_first() {
+                'x' => self.hex_literal(),
+                _ => self.numeric_literal(),
+            },
 
             c if is_term_start(c) => self.term(),
 
@@ -133,6 +136,10 @@ impl <'a>Tokenizer<'a> {
 
     fn numeric_literal(&mut self) -> LexicalToken { 
         LexicalToken::new(LexicalTokenKind::Literal, self.consume_while(|c| c.is_numeric()) + 1)
+    }
+
+    fn hex_literal(&mut self) -> LexicalToken {
+        LexicalToken::new(LexicalTokenKind::Literal, self.consume_while(|c| c.is_numeric() || c == 'x' || c == 'X') + 1)
     }
 
     fn term(&mut self) -> LexicalToken { 

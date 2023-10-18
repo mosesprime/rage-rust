@@ -1,4 +1,7 @@
 // hi mom
-let a = "hi mom"
-let b = 69
-exit(b)
+let s = "hi mom"
+let n = 69
+let h = 0x01
+let x = n
+
+exit(n)
