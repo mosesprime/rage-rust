@@ -16,8 +16,13 @@ impl Compiler {
     pub fn run(&self) -> io::Result<()> {
         let input = fs::read_to_string(&self.input)?.to_owned();
         let lexer = ragec_lexer::Lexer::new(input);
-        let tokens: Vec<ragec_lexer::LexicalToken> = lexer.tokenize().collect();
-        println!("{tokens:?}");
+        let tokens = lexer.tokenize();
+        let mut offset = 0;
+        for token in tokens {
+            let value = lexer.value(offset, token.length);
+            println!("{value}:{token:?}");
+            offset += token.length;
+        }
         Ok(())
     }
 }

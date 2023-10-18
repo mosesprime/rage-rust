@@ -13,6 +13,10 @@ impl Lexer {
         Self { input: input.to_string() }
     }
 
+    pub fn value(&self, offset: usize, len: usize) -> String {
+        self.input.chars().skip(offset).take(len).collect()
+    }
+
     /// Returns an iterator of [`LexicalToken`] from the given input.
     pub fn tokenize(&self) -> impl Iterator<Item = LexicalToken> + '_ {
         let mut tokenizer = Tokenizer::new(self.input.chars());
@@ -22,15 +26,6 @@ impl Lexer {
         })
     }
 }
-
-/** Produce lexical token iterator.
-fn tokenize(input: &str) -> impl Iterator<Item = LexicalToken> + '_ {
-    let mut tokenizer = Tokenizer::new(input.chars());
-    std::iter::from_fn(move || {
-        let token = tokenizer.next();
-        if token.kind != LexicalTokenKind::EOF { Some(token) } else { None }
-    })
-}*/    
 
 struct Tokenizer<'a> {
     chars: Chars<'a>,
@@ -130,7 +125,11 @@ impl <'a>Tokenizer<'a> {
         LexicalToken::new(LexicalTokenKind::Symbol, 1)
     }
 
-    fn string_literal(&mut self) -> LexicalToken { todo!() }
+    fn string_literal(&mut self) -> LexicalToken { 
+        let tok = LexicalToken::new(LexicalTokenKind::Literal, self.consume_while(|c| c != '"') + 2); // add the opening and closing quotes to the length
+        let _= self.consume(); //consume the closing quote
+        return tok;
+    }
 
     fn numeric_literal(&mut self) -> LexicalToken { 
         LexicalToken::new(LexicalTokenKind::Literal, self.consume_while(|c| c.is_numeric()) + 1)
@@ -225,7 +224,7 @@ fn is_term(string: &str) -> bool {
     }
 }
 
-/// is char a valid symbol
+/// is char a valid symbol except double quotes
 fn is_symbol(c: char) -> bool {
     c.is_ascii_punctuation() && c != '"'
 }
