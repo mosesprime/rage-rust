@@ -1,5 +1,8 @@
 use std::str::Chars;
 
+#[cfg(test)]
+mod tests;
+
 const EOF_CHAR: char = '\0';
 
 /// Lexical analyzer.
@@ -68,6 +71,8 @@ impl <'a>Tokenizer<'a> {
             c if is_term_start(c) => self.term(),
 
             c if c.is_ascii_punctuation() => self.symbol(),
+            
+            '\'' => self.char_literal(),
 
             EOF_CHAR => {
                 if self.is_eof() {
@@ -142,6 +147,10 @@ impl <'a>Tokenizer<'a> {
         LexicalToken::new(LexicalTokenKind::Literal, self.consume_while(|c| c.is_numeric() || c == 'x' || c == 'X') + 1)
     }
 
+    fn char_literal(&mut self) -> LexicalToken {
+        LexicalToken::new(LexicalTokenKind::Literal, self.consume_while(|c| c != '\'') + 1)
+    }
+
     fn term(&mut self) -> LexicalToken { 
         LexicalToken::new(
             LexicalTokenKind::Term, 
@@ -150,7 +159,7 @@ impl <'a>Tokenizer<'a> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct LexicalToken {
     /// the kind of token
     pub kind: LexicalTokenKind,
@@ -167,7 +176,7 @@ impl LexicalToken {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum LexicalTokenKind {
     /// any type of whitespace
     Whitespace,
