@@ -1,7 +1,5 @@
 [workspace]
 resolver = "2"
 members = [
-    "assembler/ragea",
     "compiler/ragec",
-    "common/rage-instruct"
 ]

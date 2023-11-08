@@ -1,6 +1,14 @@
-use std::error::Error;
+fn main() {
+    let compiler = ragec_lib::Compiler::new("./examples/exit.ra".into(), "./examples/exit.asm".into());
+    if let Err(errors) = compiler.run() {
+        for e in errors {
+            eprintln!("{e:?}");
+        }
+    }
+}
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let compiler = ragec_lib::Compiler::new("./examples/exit.rg".into(), "./examples/exit.asm".into());
-    Ok(compiler.run()?)
+#[test]
+fn compile_example_exit_ra() {
+    let compiler = ragec_lib::Compiler::new("./examples/exit.ra".into(), "./examples/exit.asm".into());
+    assert!(compiler.run().is_ok())
 }
