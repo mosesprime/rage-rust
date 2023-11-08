@@ -88,8 +88,15 @@ pub enum LexicalTokenKind {
 
 #[derive(Debug)]
 pub struct LexicalError {
-    pub loc: usize,
+    pub offset: usize,
+    pub length: usize,
     pub kind: LexicalErrorKind,
+}
+
+impl LexicalError {
+    pub fn new(offset: usize, length: usize, kind: LexicalErrorKind) -> Self {
+        Self { offset, length, kind }
+    }
 }
 
 #[derive(Debug)]

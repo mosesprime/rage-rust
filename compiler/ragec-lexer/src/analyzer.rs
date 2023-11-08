@@ -17,13 +17,13 @@ impl <'a> Analyzer<'a> {
 
     ///
     pub fn run(mut self) -> Vec<LexicalError> {
-        let mut cursor = 0;
+        let mut offset = 0;
         for lexeme in self.lexemes {
             match lexeme.kind {
-                LexicalTokenKind::UNKNOWN => self.error_hits.push(LexicalError { loc: cursor, kind: LexicalErrorKind::UnknownToken }),
+                LexicalTokenKind::UNKNOWN => self.error_hits.push(LexicalError::new(offset, lexeme.length, LexicalErrorKind::UnknownToken)),
                 _ => {},
             }
-            cursor += 1;
+            offset += lexeme.length;
         }
         self.error_hits
     }
