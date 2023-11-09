@@ -1,0 +1,6 @@
+// inline comment
+
+mut m = 69
+m = 420
+n = 7
+exit(n + m)
