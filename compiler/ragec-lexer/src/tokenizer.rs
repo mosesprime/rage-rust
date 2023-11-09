@@ -42,7 +42,7 @@ impl <'a>Tokenizer<'a> {
             c if c.is_ascii_digit() => match self.peek_first() {
                 'x'|'X' => self.hex_literal(),
                 'b'|'B' => self.binary_literal(),
-                c2 if c2.is_ascii_digit() => self.numeric_literal(),
+                c if c.is_ascii_digit() | c.is_whitespace() => self.numeric_literal(),
                 _ => return Token::new(TokenKind::UNKNOWN, 1),
             },
 
