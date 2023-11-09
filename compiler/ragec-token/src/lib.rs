@@ -77,6 +77,7 @@ pub enum TermKind {
 
     Return,
     Mut,
+    Dyn,
     Match,
 }
 
@@ -132,6 +133,7 @@ fn match_term(str: &str) -> TermKind {
     match str {
         "return" => TermKind::Return,
         "mut" => TermKind::Mut,
+        "dyn" => TermKind::Dyn,
         "match" => TermKind::Match,
         _ => TermKind::Identifier,
     }
