@@ -1,5 +1,5 @@
 fn main() {
-    let compiler = ragec_lib::Compiler::new("./examples/test.ra".into(), "./examples/exit.asm".into());
+    let compiler = ragec_lib::Compiler::new("./examples/test.rg".into(), "./examples/exit.asm".into());
     match compiler.run() {
         Err(errors) => {
             for e in errors {
@@ -10,4 +10,16 @@ fn main() {
             println!("Okay");
         },
     }
+}
+
+#[test]   
+fn compile_test_ra() {
+    let compiler = ragec_lib::Compiler::new("./examples/test.ra".into(), "./examples/exit.asm".into());
+    assert!(compiler.run().is_err());
+}
+
+#[test]   
+fn compile_test_rg() {
+    let compiler = ragec_lib::Compiler::new("./examples/test.rg".into(), "./examples/exit.asm".into());
+    assert!(compiler.run().is_err());
 }
