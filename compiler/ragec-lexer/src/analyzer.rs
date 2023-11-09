@@ -1,15 +1,17 @@
-use crate::{LexicalError, LexicalToken, LexicalErrorKind, LexicalTokenKind};
+use ragec_token::{Token, TokenKind};
+
+use crate::{LexicalError, LexicalErrorKind};
 
 /// Lexical analysis manager.
 pub struct Analyzer<'a> {
-    lexemes: &'a Vec<LexicalToken>,
+    lexemes: &'a Vec<Token>,
     error_hits: Vec<LexicalError>,
 }
 
 
 impl <'a> Analyzer<'a> {
     ///
-    pub fn new(lexemes: &'a Vec<LexicalToken>) -> Self {
+    pub fn new(lexemes: &'a Vec<Token>) -> Self {
         Self {
             lexemes,
             error_hits: Default::default() }
@@ -20,7 +22,7 @@ impl <'a> Analyzer<'a> {
         let mut offset = 0;
         for lexeme in self.lexemes {
             match lexeme.kind {
-                LexicalTokenKind::UNKNOWN => self.error_hits.push(LexicalError::new(offset, lexeme.length, LexicalErrorKind::UnknownToken)),
+                TokenKind::UNKNOWN => self.error_hits.push(LexicalError::new(offset, lexeme.length, LexicalErrorKind::UnknownToken)),
                 _ => {},
             }
             offset += lexeme.length;

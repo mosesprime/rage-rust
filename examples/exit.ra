@@ -1,4 +1,4 @@
 // hi mom
-let n = 69
-let unknown = 0q0
+mut n = 69
+n = 0q0
 exit(n)

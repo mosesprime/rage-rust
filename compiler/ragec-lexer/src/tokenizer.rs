@@ -1,6 +1,8 @@
-use std::str::Chars;
+use std::{str::Chars, collections::VecDeque};
 
-use crate::{LexicalToken, LexicalTokenKind, EOF_CHAR};
+use ragec_token::{Token, TokenKind, SymbolKind};
+
+use crate::EOF_CHAR;
 
 pub struct Tokenizer<'a> {
     chars: Chars<'a>,
@@ -11,20 +13,20 @@ impl <'a>Tokenizer<'a> {
         Self { chars }
     }
 
-    pub fn next(&mut self) -> LexicalToken {
+    pub fn next(&mut self) -> Token {
         let first = match self.consume() {
             Some(c) => c,
             None => {
                 if self.is_eof() {
                     // no token but is end of file
-                    return LexicalToken::new(LexicalTokenKind::EOF, 0);
+                    return Token::new(TokenKind::EOF, 0);
                 } else {
                     // no token yet is not the end of file
-                    return LexicalToken::new(LexicalTokenKind::UNKNOWN, 0);
+                    return Token::new(TokenKind::UNKNOWN, 0);
                 }
             },
         };
-        let token = match first {
+        return match first {
             // whitespace
             c if is_whitespace(c) => self.whitespace(),
 
@@ -33,36 +35,42 @@ impl <'a>Tokenizer<'a> {
                 // inline comment
                 '/' => self.line_comment(),
                 // slash symbol
-                _ => self.symbol(),
+                _ => return Token::new_symbol(SymbolKind::Slash),
             }
 
-            '"' => self.string_literal(),
-
+            // number
             c if c.is_ascii_digit() => match self.peek_first() {
                 'x'|'X' => self.hex_literal(),
                 'b'|'B' => self.binary_literal(),
                 c2 if c2.is_ascii_digit() => self.numeric_literal(),
-                _ => return LexicalToken::new(LexicalTokenKind::UNKNOWN, 1),
+                _ => return Token::new(TokenKind::UNKNOWN, 1),
             },
 
-            c if is_term_start(c) => self.term(),
 
-            c if c.is_ascii_punctuation() => self.symbol(),
-            
+            // string
+            '"' => self.string_literal(),
+
+            // alphabetic or _
+            c if is_term_start(c) => self.term(c),
+
+            // 'char'
             '\'' => self.char_literal(),
+
+            // non-slash and non-char symbol
+            c if c.is_ascii_punctuation() => return Token::new_match_symbol(c),
+            
 
             EOF_CHAR => {
                 if self.is_eof() {
                     // end of file
-                    return LexicalToken::new(LexicalTokenKind::EOF, 0);
+                    return Token::new(TokenKind::EOF, 0)
                 } else {
                     // end of file token, but is not the end of the file
-                    return LexicalToken::new(LexicalTokenKind::UNKNOWN, 1);
+                    return Token::new(TokenKind::UNKNOWN, 1);
                 }
             },
-            _ => LexicalToken::new(LexicalTokenKind::UNKNOWN, 1), // WIP
+            _ => Token::new(TokenKind::UNKNOWN, 1), // WIP
         };
-        return token;
     }
     
     ///
@@ -96,47 +104,43 @@ impl <'a>Tokenizer<'a> {
         return len;
     }
 
-    fn whitespace(&mut self) -> LexicalToken {
+    fn whitespace(&mut self) -> Token {
         let len = self.consume_while(is_whitespace);
-        LexicalToken::new(LexicalTokenKind::Whitespace, len + 1)
+        Token::new(TokenKind::Whitespace, len + 1)
     }
 
-    fn line_comment(&mut self) -> LexicalToken {
+    fn line_comment(&mut self) -> Token {
         let len = self.consume_while(|c| c != '\n');
-        LexicalToken::new(LexicalTokenKind::Comment, len + 1) // add the length consumed plus the '/' already consumed
+        Token::new(TokenKind::Comment, len + 1) // add the length consumed plus the '/' already consumed
     }
 
-    fn symbol(&mut self) -> LexicalToken {
-        LexicalToken::new(LexicalTokenKind::Symbol, 1)
-    }
-
-    fn string_literal(&mut self) -> LexicalToken { 
-        let tok = LexicalToken::new(LexicalTokenKind::Literal, self.consume_while(|c| c != '"') + 2); // add the opening and closing quotes to the length
+    fn string_literal(&mut self) -> Token { 
+        let tok = Token::new_string_literal(self.consume_while(|c| c != '"') + 2); // add the opening and closing quotes to the length
         let _= self.consume(); //consume the closing quote
         return tok;
     }
 
-    fn numeric_literal(&mut self) -> LexicalToken { 
-        LexicalToken::new(LexicalTokenKind::Literal, self.consume_while(|c| c.is_numeric()) + 1)
+    fn numeric_literal(&mut self) -> Token { 
+        Token::new_numeric_literal(self.consume_while(|c| c.is_numeric()) + 1)
     }
 
-    fn hex_literal(&mut self) -> LexicalToken {
-        LexicalToken::new(LexicalTokenKind::Literal, self.consume_while(|c| c.is_numeric() || c == 'x' || c == 'X') + 1)
+    fn hex_literal(&mut self) -> Token {
+        Token::new_hex_literal(self.consume_while(|c| c.is_numeric() || c == 'x' || c == 'X') + 1)
     }
 
-    fn binary_literal(&mut self) -> LexicalToken {
-        LexicalToken::new(LexicalTokenKind::Literal, self.consume_while(|c| c.is_numeric() || c == 'b' || c == 'B') + 1)
+    fn binary_literal(&mut self) -> Token {
+        Token::new_binary_literal(self.consume_while(|c| c.is_numeric() || c == 'b' || c == 'B') + 1)
     }
 
-    fn char_literal(&mut self) -> LexicalToken {
-        LexicalToken::new(LexicalTokenKind::Literal, self.consume_while(|c| c != '\'') + 1)
+    fn char_literal(&mut self) -> Token {
+        Token::new_char_literal(self.consume_while(|c| c != '\'') + 1)
     }
 
-    fn term(&mut self) -> LexicalToken { 
-        LexicalToken::new(
-            LexicalTokenKind::Term, 
-            self.consume_while(|c| is_term_continue(c)) + 1
-        )
+    fn term(&mut self, c: char) -> Token { 
+        let chars = self.chars.as_str();
+        let len = self.consume_while(|c| is_term_continue(c)) + 1;
+        let s = chars.get(..(len - 1)).unwrap();
+        Token::new_term(format!("{}{}", c, s).as_str())
     }
 }
 
@@ -167,17 +171,17 @@ fn is_whitespace(c: char) -> bool {
 
 /// is char a valid start to a term
 fn is_term_start(c: char) -> bool {
-    c.is_alphabetic() || c == '_'
+    c.is_ascii_alphabetic() || c == '_'
 }
 
 /// is char a valid continuation to a term
 fn is_term_continue(c: char) -> bool {
-    c.is_alphanumeric() || c == '_'
+    c.is_ascii_alphanumeric() || c == '_'
 }
 
 /// is a subslice a valid term
-fn is_term(string: &str) -> bool {
-    let mut chars = string.chars();
+fn is_term(str: &str) -> bool {
+    let mut chars = str.chars();
     if let Some(first) = chars.next() {
         is_term_start(first) && chars.all(is_term_continue)
     } else {

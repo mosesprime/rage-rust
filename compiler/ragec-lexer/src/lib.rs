@@ -2,6 +2,8 @@ mod analyzer;
 //mod sanitizer;
 mod tokenizer;
 
+use ragec_token::{Token, TokenKind};
+
 use crate::analyzer::Analyzer;
 use crate::tokenizer::Tokenizer;
 
@@ -10,7 +12,7 @@ const EOF_CHAR: char = '\0';
 /// Lexical analyzer.
 pub struct Lexer {
     input: String,
-    lexemes: Vec<LexicalToken>,
+    lexemes: Vec<Token>,
     //output: Vec<Tokens>,
 }
 
@@ -29,7 +31,7 @@ impl Lexer {
     }
 
     ///
-    pub fn lexemes(&self) -> &Vec<LexicalToken> {
+    pub fn lexemes(&self) -> &Vec<Token> {
         &self.lexemes
     }
 
@@ -38,7 +40,7 @@ impl Lexer {
         let mut tokenizer = Tokenizer::new(self.input.chars());
         self.lexemes = std::iter::from_fn(move || {
             let token = tokenizer.next();
-            if token.kind != LexicalTokenKind::EOF { Some(token) } else { None }
+            if token.kind != TokenKind::EOF { Some(token) } else { None }
         }).collect();
     }
 
@@ -50,41 +52,7 @@ impl Lexer {
 
 
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct LexicalToken {
-    /// the kind of token
-    pub kind: LexicalTokenKind,
-    /// number of chars in token
-    pub length: usize,
-}
 
-impl LexicalToken {
-    pub fn new(kind: LexicalTokenKind, length: usize) -> Self {
-        Self {
-            kind,
-            length,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum LexicalTokenKind {
-    /// any type of whitespace
-    Whitespace,
-    /// any type of comment
-    Comment,
-    /// any type of literal
-    Literal,
-    /// Delimiter or operator.
-    Symbol,
-    /// Identifier or keyword.
-    Term,
-
-    /// End of file.
-    EOF,
-    ///
-    UNKNOWN,
-}
 
 #[derive(Debug)]
 pub struct LexicalError {
