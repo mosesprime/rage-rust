@@ -1,3 +1,6 @@
+mod term;
+use crate::term::TermKind;
+
 #[derive(Debug, Eq, PartialEq)]
 pub struct Token {
      /// number of chars in token
@@ -40,7 +43,7 @@ impl Token {
     }
 
     pub fn new_term(str: &str) -> Self {
-        Token::new(TokenKind::Term(match_term(str)), str.len())
+        Token::new(TokenKind::Term(TermKind::match_term(str)), str.len())
     }
 
     pub fn new_symbol(kind: SymbolKind) -> Self {
@@ -76,16 +79,6 @@ pub enum CommentKind {
     Line,
     Block,
     // Document,
-}
-
-#[derive(Debug, Eq, PartialEq)]
-pub enum TermKind {
-    Identifier,
-
-    Return,
-    Mut,
-    Dyn,
-    Match,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -134,16 +127,6 @@ pub enum SymbolKind {
     Tilde,
 
     UNKNOWN,
-}
-
-fn match_term(str: &str) -> TermKind {
-    match str {
-        "return" => TermKind::Return,
-        "mut" => TermKind::Mut,
-        "dyn" => TermKind::Dyn,
-        "match" => TermKind::Match,
-        _ => TermKind::Identifier,
-    }
 }
 
 fn match_symbol(c: char) -> SymbolKind {
