@@ -1,5 +1,10 @@
+//*
+* Multilined
+* Block Comment
+*/
 
 main() {
+    // single line comment
     println!("Hi mom!")    
 }
 
@@ -21,7 +26,8 @@ FavoriteColor {
 }
 
 impl FavoriteColor {
-    /// test if favorite color is red
+    /// Documentation comment
+    /// can be multilined
     is_red pub (&self) bool {
         self == Red
     }

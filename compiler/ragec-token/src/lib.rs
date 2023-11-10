@@ -57,7 +57,7 @@ pub enum TokenKind {
     /// any type of whitespace
     Whitespace,
     /// any type of comment
-    Comment,
+    Comment(CommentKind),
     /// any type of literal
     Literal(LiteralKind),
     /// Delimiter or operator.
@@ -69,6 +69,13 @@ pub enum TokenKind {
     EOF,
     ///
     UNKNOWN,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum CommentKind {
+    Line,
+    Block,
+    // Document,
 }
 
 #[derive(Debug, Eq, PartialEq)]

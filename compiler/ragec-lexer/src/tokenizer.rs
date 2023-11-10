@@ -1,6 +1,6 @@
 use std::{str::Chars, collections::VecDeque};
 
-use ragec_token::{Token, TokenKind, SymbolKind};
+use ragec_token::{Token, TokenKind, SymbolKind, CommentKind};
 
 use crate::EOF_CHAR;
 
@@ -33,7 +33,11 @@ impl <'a>Tokenizer<'a> {
             // slash
             '/' => match self.peek_first() {
                 // inline comment
-                '/' => self.line_comment(),
+                '/' => match self.peek_second() {
+                    '*' => self.block_comment(),
+                    // '/' => self.document_comment(),
+                    _ => self.line_comment(),
+                },
                 // slash symbol
                 _ => return Token::new_symbol(SymbolKind::Slash),
             }
@@ -114,9 +118,22 @@ impl <'a>Tokenizer<'a> {
         Token::new(TokenKind::Whitespace, len + 1)
     }
 
+    fn block_comment(&mut self) -> Token {
+        let mut len = 1;
+        let mut prev = '_';
+        loop {
+            if self.is_eof() { break; }
+            len += 1;
+            let new = self.consume().unwrap();
+            if prev == '*' && new == '/' { break; }
+            prev = new;
+        }
+        Token::new(TokenKind::Comment(CommentKind::Block), len)
+    }
+
     fn line_comment(&mut self) -> Token {
         let len = self.consume_while(|c| c != '\n');
-        Token::new(TokenKind::Comment, len + 1) // add the length consumed plus the '/' already consumed
+        Token::new(TokenKind::Comment(CommentKind::Line), len + 1) // add the length consumed plus the '/' already consumed
     }
 
     fn string_literal(&mut self) -> Token { 
