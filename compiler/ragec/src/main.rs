@@ -1,5 +1,5 @@
 fn main() {
-    let compiler = ragec_lib::Compiler::new("./examples/test.rg".into(), "./examples/exit.asm".into());
+    let compiler = ragec_lib::Compiler::new("./examples/demo.rg".into(), "./examples/exit.asm".into());
     match compiler.run() {
         Err(errors) => {
             for e in errors {

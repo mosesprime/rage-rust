@@ -51,7 +51,7 @@ impl Token {
     }
 
     pub fn new_match_symbol(c: char) -> Self {
-        Token::new_symbol(match_symbol(c))
+        Token::new_symbol(SymbolKind::match_symbol(c))
     }
 }
 
@@ -129,8 +129,9 @@ pub enum SymbolKind {
     UNKNOWN,
 }
 
-fn match_symbol(c: char) -> SymbolKind {
-    match c {
+impl SymbolKind {
+    fn match_symbol(c: char) -> Self {
+        match c {
         '!' => SymbolKind::Exclamation,
         '"' => SymbolKind::Quotation,
         '#' => SymbolKind::Number,
@@ -164,5 +165,7 @@ fn match_symbol(c: char) -> SymbolKind {
         '}' => SymbolKind::RCurly,
         '~' => SymbolKind::Tilde,
         _ => SymbolKind::UNKNOWN, 
-    }       
+    }
+    }
 }
+
