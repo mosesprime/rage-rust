@@ -40,10 +40,15 @@ impl <'a>Tokenizer<'a> {
 
             // number
             c if c.is_ascii_digit() => match self.peek_first() {
-                'x'|'X' => self.hex_literal(),
-                'b'|'B' => self.binary_literal(),
-                c if c.is_ascii_digit() | c.is_whitespace() => self.numeric_literal(),
-                _ => return Token::new(TokenKind::UNKNOWN, 1),
+                'x'|'X' => match self.peek_second() {
+                    c if c.is_ascii_digit() => self.hex_literal(),
+                    _ => return Token::new(TokenKind::UNKNOWN, 1),
+                },
+                'b'|'B' => match self.peek_second() {
+                    c if c.is_ascii_digit() => self.binary_literal(),
+                    _ => return Token::new(TokenKind::UNKNOWN, 1),
+                },
+                _ => self.numeric_literal(),
             },
 
 
@@ -78,12 +83,12 @@ impl <'a>Tokenizer<'a> {
         self.chars.as_str().is_empty()
     }
 
-    ///
+    /// Peeks the first char. Does not consume.
     fn peek_first(&self) -> char {
         self.chars.clone().next().unwrap_or(EOF_CHAR)
     }
 
-    ///
+    /// Peeks the second char. Does not consume.
     fn peek_second(&self) -> char {
         let mut iter = self.chars.clone();
         iter.next();
