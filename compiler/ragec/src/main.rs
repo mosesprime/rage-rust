@@ -1,16 +1,27 @@
+use std::thread;
+
 use ragec_lib::Compiler;
 
 fn main() {
-    let compiler = Compiler::new();
-    match compiler.run("./examples/demo.rg".into()) {
-        Err(errors) => {
-            for e in errors {
-                eprintln!("{e:?}");
-            }
-        },
-        Ok(()) => {
-            println!("Okay");
-        },
+    let tasks = vec!["./examples/demo.rg", "./examples/demo.ra"];
+    let mut handles = vec![];
+    for task in tasks {
+        let h = thread::spawn(move || {
+            match Compiler::new().run(task.into()) {
+                Err(errors) => {
+                    for e in errors {
+                        eprintln!("{e:?}");
+                    }
+                },
+                Ok(()) => {
+                    println!("Okay");
+                },
+            }    
+        });
+        handles.push(h);
+    }
+    for handle in handles {
+        handle.join().unwrap();
     }
 }
 
