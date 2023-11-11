@@ -20,18 +20,19 @@ impl Compiler {
     }
 
     /// Execute the entire compilation of a source path.
-    pub fn run(&self, path: PathBuf) -> Result<(), Vec<CompilerError>> {
+    pub fn run(&mut self, path: PathBuf) -> Result<(), Vec<CompilerError>> {
         let input = match fs::read_to_string(&path) {
             Ok(s) => s.to_owned(),
             Err(e) => return Err(vec![CompilerError::Io(e)]),
         };
         let tokens = self.run_lexer(input.chars())?;
         let mut offset = 0;
-        for token in tokens {
+        for token in &tokens {
             let value = self.value_from_input(input.chars(), offset, token.length);
             println!("{value}:{token:?}");
             offset += token.length;
         }
+        let p = self.run_parser(tokens)?;
         Ok(())
     }
 
@@ -51,8 +52,8 @@ impl Compiler {
     }
 
     /// Execute the [`Parser`]
-    fn run_parser(&self) -> Result<(), Vec<CompilerError>> {
-        let tree = self.parser.run();
+    fn run_parser(&mut self, input: Vec<Token>) -> Result<(), Vec<CompilerError>> {
+        let tree = self.parser.run(input);
         Ok(())
     }
 

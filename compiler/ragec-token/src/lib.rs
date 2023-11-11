@@ -18,8 +18,12 @@ impl Token {
         }
     }
 
-    pub fn new_whitespace(length: usize) -> Self {
-        Token::new(TokenKind::Whitespace, length)
+    pub fn new_blank_whitespace(length: usize) -> Self {
+        Token::new(TokenKind::Whitespace(WhitespaceKind::Blank), length)
+    }
+    
+    pub fn new_newline_whitespace() -> Self {
+        Token::new(TokenKind::Whitespace(WhitespaceKind::NewLine), 1)
     }
 
     pub fn new_string_literal(length: usize) -> Self {
@@ -58,7 +62,7 @@ impl Token {
 #[derive(Debug, Eq, PartialEq)]
 pub enum TokenKind {
     /// any type of whitespace
-    Whitespace,
+    Whitespace(WhitespaceKind),
     /// any type of comment
     Comment(CommentKind),
     /// any type of literal
@@ -72,6 +76,12 @@ pub enum TokenKind {
     EOF,
     ///
     UNKNOWN,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum WhitespaceKind {
+    Blank,
+    NewLine,
 }
 
 #[derive(Debug, PartialEq, Eq)]
