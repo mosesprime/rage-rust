@@ -27,7 +27,10 @@ impl <'a>Tokenizer<'a> {
             },
         };
         return match first {
-            // whitespace
+            // new line '\n'
+            '\n' => self.new_line(),
+
+            // whitespace, not new line
             c if is_whitespace(c) => self.whitespace(),
 
             // slash
@@ -113,9 +116,12 @@ impl <'a>Tokenizer<'a> {
         return len;
     }
 
+    fn new_line(&mut self) -> Token {
+        Token::new_newline_whitespace()
+    }
+
     fn whitespace(&mut self) -> Token {
-        let len = self.consume_while(is_whitespace);
-        Token::new(TokenKind::Whitespace, len + 1)
+        Token::new_blank_whitespace(self.consume_while(is_whitespace) + 1)
     }
 
     fn block_comment(&mut self) -> Token {
@@ -166,13 +172,12 @@ impl <'a>Tokenizer<'a> {
     }
 }
 
-/// is char a valid whiespace
+/// is char a valid whiespace, excluses '\n'
 fn is_whitespace(c: char) -> bool {
     matches!(
         c,
         // Usual ASCII suspects
         '\u{0009}'   // \t
-        | '\u{000A}' // \n
         | '\u{000B}' // vertical tab
         | '\u{000C}' // form feed
         | '\u{000D}' // \r
