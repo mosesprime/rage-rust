@@ -1,33 +1,43 @@
 use std::{path::PathBuf, fs, io, str::Chars};
 
-use ragec_lexer::{self, Lexer};
+use ragec_lexer::{self, Lexer, LexicalError};
+use ragec_parser::{Parser, ParsingError};
 use ragec_token::{self, Token};
 
-/// Compilation manager.
+/// A single compilation unit.
 pub struct Compiler {
-    path: PathBuf,
-    input: String,
+    lexer: Lexer,
+    parser: Parser,
 }
 
 impl Compiler {
     /// Create new [`Compiler`] instance. Recommended to use only one instance.
-    pub fn new(path: PathBuf) -> Result<Self, CompilerError> {
-        match fs::read_to_string(&path) {
-            Ok(input) => {
-                return Ok(Self { path, input });
-            },
-            Err(e) => return Err(CompilerError::Io(e)),
+    pub fn new() -> Self {
+        Self {
+            lexer: Lexer::new(),
+            parser: Parser::new(),
+        }
+    }
+
+    /// Execute the entire compilation of a source path.
+    pub fn run(&self, path: PathBuf) -> Result<(), Vec<CompilerError>> {
+        let input = match fs::read_to_string(&path) {
+            Ok(s) => s.to_owned(),
+            Err(e) => return Err(vec![CompilerError::Io(e)]),
         };
+        let tokens = self.run_lexer(input.chars())?;
+        let mut offset = 0;
+        for token in tokens {
+            let value = self.value_from_input(input.chars(), offset, token.length);
+            println!("{value}:{token:?}");
+            offset += token.length;
+        }
+        Ok(())
     }
 
-    /// Execute the entire compilation.
-    pub fn run(&self) -> Result<(), Vec<CompilerError>> {
-        self.run_lexer()
-    }
-
-    /// Execute the compilation.
-    pub fn run_lexer(&self) -> Result<(), Vec<CompilerError>> {
-        let tokens: Vec<Token> = match Lexer::new().run(self.input.chars()) {
+    /// Execute the [`Lexer`].
+    fn run_lexer(&self, input: Chars) -> Result<Vec<Token>, Vec<CompilerError>> {
+        let tokens = match self.lexer.run(input) {
             Ok(t) => t,
             Err(err) => {
                 let mut vec: Vec<CompilerError> = Default::default();
@@ -37,22 +47,23 @@ impl Compiler {
                 return Err(vec);
             },
         };
-        let mut offset = 0;
-        for token in tokens {
-            let value = self.value_from_input(offset, token.length);
-            println!("{value}:{token:?}");
-            offset += token.length;
-        }
+        Ok(tokens)
+    }
+
+    /// Execute the [`Parser`]
+    fn run_parser(&self) -> Result<(), Vec<CompilerError>> {
+        let tree = self.parser.run();
         Ok(())
     }
 
-    pub fn value_from_input(&self, offset: usize, length: usize) -> String {
-        self.input.chars().skip(offset).take(length).collect()
+    pub fn value_from_input(&self, input: Chars, offset: usize, length: usize) -> String {
+        input.skip(offset).take(length).collect()
     }
 }
 
 #[derive(Debug)]
 pub enum CompilerError {
     Io(io::Error),
-    Lexical(ragec_lexer::LexicalError),
+    Lexical(LexicalError),
+    Parsing(ParsingError),
 }

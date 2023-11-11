@@ -14,9 +14,16 @@ impl Parser {
         }
     }
 
+    pub fn run(&self) -> Result<(), ParsingError> {
+        Ok(())
+    }
+
     fn next_id(&mut self) -> usize {
         let n = self.next_id;
         self.next_id += 1;
         n
     }
 }
+
+#[derive(Debug)]
+pub enum ParsingError {}
