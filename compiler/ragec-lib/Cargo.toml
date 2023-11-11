@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 ragec-lexer = { path = "../ragec-lexer" }
 ragec-parser = { path = "../ragec-parser" }
+ragec-token = { path = "../ragec-token" }

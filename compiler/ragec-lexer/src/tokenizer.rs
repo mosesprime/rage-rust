@@ -1,4 +1,4 @@
-use std::{str::Chars, collections::VecDeque};
+use std::str::Chars;
 
 use ragec_token::{Token, TokenKind, SymbolKind, CommentKind};
 

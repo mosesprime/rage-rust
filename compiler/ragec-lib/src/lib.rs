@@ -1,43 +1,53 @@
-use std::{path::PathBuf, fs, io};
+use std::{path::PathBuf, fs, io, str::Chars};
 
-use ragec_lexer;
+use ragec_lexer::{self, Lexer};
+use ragec_token::{self, Token};
 
 /// Compilation manager.
 pub struct Compiler {
-    pub input: PathBuf,
-    pub output: PathBuf,
+    path: PathBuf,
+    input: String,
 }
 
 impl Compiler {
     /// Create new [`Compiler`] instance. Recommended to use only one instance.
-    pub fn new(input: PathBuf, output: PathBuf) -> Self {
-        Self { input, output }
+    pub fn new(path: PathBuf) -> Result<Self, CompilerError> {
+        match fs::read_to_string(&path) {
+            Ok(input) => {
+                return Ok(Self { path, input });
+            },
+            Err(e) => return Err(CompilerError::Io(e)),
+        };
+    }
+
+    /// Execute the entire compilation.
+    pub fn run(&self) -> Result<(), Vec<CompilerError>> {
+        self.run_lexer()
     }
 
     /// Execute the compilation.
-    pub fn run(&self) -> Result<(), Vec<CompilerError>> {
-        let mut errors: Vec<CompilerError> = Default::default();
-        let input = match fs::read_to_string(&self.input) {
-            Ok(s) => s.to_owned(),
-            Err(e) => return Err(vec![CompilerError::Io(e)]),
+    pub fn run_lexer(&self) -> Result<(), Vec<CompilerError>> {
+        let tokens: Vec<Token> = match Lexer::new().run(self.input.chars()) {
+            Ok(t) => t,
+            Err(err) => {
+                let mut vec: Vec<CompilerError> = Default::default();
+                for e in err {
+                    vec.push(CompilerError::Lexical(e));
+                }  
+                return Err(vec);
+            },
         };
-        let mut lexer = ragec_lexer::Lexer::new(input);
-        lexer.tokenize();
-        let lexical_analysis_errors = lexer.analyze();
         let mut offset = 0;
-        for token in lexer.lexemes() {
-            let value = lexer.value(offset, token.length);
+        for token in tokens {
+            let value = self.value_from_input(offset, token.length);
             println!("{value}:{token:?}");
             offset += token.length;
         }
-        for e in lexical_analysis_errors {
-            errors.push(CompilerError::Lexical(e));
-        }
-
-        if errors.len() > 0 {
-            return Err(errors);
-        }
         Ok(())
+    }
+
+    pub fn value_from_input(&self, offset: usize, length: usize) -> String {
+        self.input.chars().skip(offset).take(length).collect()
     }
 }
 

@@ -1,5 +1,5 @@
 fn main() {
-    let compiler = ragec_lib::Compiler::new("./examples/demo.rg".into(), "./examples/exit.asm".into());
+    let compiler = ragec_lib::Compiler::new("./examples/demo.rg".into()).expect("Failed to load source into compiler.");
     match compiler.run() {
         Err(errors) => {
             for e in errors {
@@ -14,12 +14,12 @@ fn main() {
 
 #[test]   
 fn compile_test_ra() {
-    let compiler = ragec_lib::Compiler::new("./examples/demo.ra".into(), "./examples/exit.asm".into());
-    assert!(compiler.run().is_err());
+    let compiler = ragec_lib::Compiler::new("../../examples/demo.ra".into()).unwrap();
+    compiler.run().unwrap();
 }
 
 #[test]   
 fn compile_test_rg() {
-    let compiler = ragec_lib::Compiler::new("./examples/demo.rg".into(), "./examples/exit.asm".into());
-    assert!(compiler.run().is_err());
+    let compiler = ragec_lib::Compiler::new("../../examples/demo.rg".into()).unwrap();
+    compiler.run().unwrap();
 }

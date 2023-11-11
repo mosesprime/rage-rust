@@ -3,30 +3,33 @@ use ragec_token::{Token, TokenKind};
 use crate::{LexicalError, LexicalErrorKind};
 
 /// Lexical analysis manager.
-pub struct Analyzer<'a> {
-    lexemes: &'a Vec<Token>,
+pub struct Analyzer {
     error_hits: Vec<LexicalError>,
 }
 
 
-impl <'a> Analyzer<'a> {
-    ///
-    pub fn new(lexemes: &'a Vec<Token>) -> Self {
+impl Analyzer {
+    /// New instance of [`Analyzer`].
+    pub fn new() -> Self {
         Self {
-            lexemes,
-            error_hits: Default::default() }
+            error_hits: Default::default()
+        }
     }
 
-    ///
-    pub fn run(mut self) -> Vec<LexicalError> {
+    /// Executes the [`Analyzer`] passes on the given [`Vec<Token>`].
+    /// Returns a result containing [`Ok(())`] or [`Err(Vec<LexicalError>)`].
+    pub fn run(mut self, mut lexemes: &Vec<Token>) -> Result<(), Vec<LexicalError>> {
         let mut offset = 0;
-        for lexeme in self.lexemes {
+        for lexeme in lexemes {
             match lexeme.kind {
                 TokenKind::UNKNOWN => self.error_hits.push(LexicalError::new(offset, lexeme.length, LexicalErrorKind::UnknownToken)),
                 _ => {},
             }
             offset += lexeme.length;
         }
-        self.error_hits
+        if self.error_hits.len() > 0 {
+            return Err(self.error_hits);
+        }
+        Ok(())
     }
 }

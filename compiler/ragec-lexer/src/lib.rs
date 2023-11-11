@@ -1,6 +1,7 @@
 mod analyzer;
-//mod sanitizer;
 mod tokenizer;
+
+use std::str::Chars;
 
 use ragec_token::{Token, TokenKind};
 
@@ -10,49 +11,27 @@ use crate::tokenizer::Tokenizer;
 const EOF_CHAR: char = '\0';
 
 /// Lexical analyzer.
-pub struct Lexer {
-    input: String,
-    lexemes: Vec<Token>,
-    //output: Vec<Tokens>,
-}
+pub struct Lexer {}
 
 impl Lexer {
     /// New instance of [`Lexer`].
-    pub fn new(input: impl ToString) -> Self {
-        Self { 
-            input: input.to_string(),
-            lexemes: Default::default(),
-        }
+    pub fn new() -> Self {
+        Self {}
     }
-    
-    /// Get the value at the given location.
-    pub fn value(&self, offset: usize, len: usize) -> String {
-        self.input.chars().skip(offset).take(len).collect()
-    }
-
-    ///
-    pub fn lexemes(&self) -> &Vec<Token> {
-        &self.lexemes
-    }
-
-    /// Runs the [`Tokenizer`].
-    pub fn tokenize(&mut self) {
-        let mut tokenizer = Tokenizer::new(self.input.chars());
-        self.lexemes = std::iter::from_fn(move || {
+   
+    /// Execute the [`Tokenizer`] and run all [`Analyzer`] passes.
+    /// Returns a result of [`Vec<Token>`] or a [`Vec<LexicalError>`].
+    pub fn run(&self, input: Chars) -> Result<Vec<Token>, Vec<LexicalError>> {
+        let mut tokenizer = Tokenizer::new(input);
+        let lexemes = std::iter::from_fn(move || {
             let token = tokenizer.next();
             if token.kind != TokenKind::EOF { Some(token) } else { None }
         }).collect();
-    }
+        Analyzer::new().run(&lexemes)?;
+        Ok(lexemes)
 
-    /// Runs all the [`Analyzer`] passes. Returns a list of [`LexicalError`]s.
-    pub fn analyze(&self) -> Vec<LexicalError> {
-        Analyzer::new(&self.lexemes).run()
     }
 }
-
-
-
-
 
 #[derive(Debug)]
 pub struct LexicalError {
