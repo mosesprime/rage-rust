@@ -42,7 +42,7 @@ impl <'a>Tokenizer<'a> {
                     _ => self.line_comment(),
                 },
                 // slash symbol
-                _ => return Token::new_symbol(SymbolKind::Slash),
+                _ => return Token::new_symbol(SymbolKind::Slash, 1),
             }
 
             // number
@@ -69,8 +69,7 @@ impl <'a>Tokenizer<'a> {
             '\'' => self.char_literal(),
 
             // non-slash and non-char symbol
-            c if c.is_ascii_punctuation() => return Token::new_match_symbol(c),
-            
+            c if c.is_ascii_punctuation() => self.symbol(c),
 
             EOF_CHAR => {
                 if self.is_eof() {
@@ -144,7 +143,7 @@ impl <'a>Tokenizer<'a> {
 
     fn string_literal(&mut self) -> Token { 
         let tok = Token::new_string_literal(self.consume_while(|c| c != '"') + 2); // add the opening and closing quotes to the length
-        let _= self.consume(); //consume the closing quote
+        let _ = self.consume(); // consume the closing quote
         return tok;
     }
 
@@ -162,6 +161,24 @@ impl <'a>Tokenizer<'a> {
 
     fn char_literal(&mut self) -> Token {
         Token::new_char_literal(self.consume_while(|c| c != '\'') + 1)
+    }
+
+    fn symbol(&mut self, c: char) -> Token {
+        if let Some(s) = SymbolKind::match_symbol(&[c]) {
+            let c2 = self.peek_first();
+            if let Some(s2) = SymbolKind::match_symbol(&[c, c2]) {
+                let c3 = self.peek_second();
+                if let Some(s3)= SymbolKind::match_symbol(&[c, c2, c3]) {
+                    self.consume();
+                    self.consume();
+                    return Token::new_symbol(s3, 3);
+                }
+                self.consume();
+                return Token::new_symbol(s2, 2);
+            }
+            return Token::new_symbol(s, 1);
+        }
+        Token::new(TokenKind::UNKNOWN, 1)
     }
 
     fn term(&mut self, c: char) -> Token { 

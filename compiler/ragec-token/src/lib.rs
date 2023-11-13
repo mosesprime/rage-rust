@@ -1,4 +1,5 @@
 mod term;
+
 use crate::term::TermKind;
 
 #[derive(Debug, Eq, PartialEq)]
@@ -50,12 +51,15 @@ impl Token {
         Token::new(TokenKind::Term(TermKind::match_term(str)), str.len())
     }
 
-    pub fn new_symbol(kind: SymbolKind) -> Self {
-        Token::new(TokenKind::Symbol(kind), 1)
+    pub fn new_symbol(kind: SymbolKind, len: usize) -> Self {
+        Token::new(TokenKind::Symbol(kind), len)
     }
 
-    pub fn new_match_symbol(c: char) -> Self {
-        Token::new_symbol(SymbolKind::match_symbol(c))
+    pub fn new_match_symbol(chars: &[char]) -> Self {
+        match SymbolKind::match_symbol(chars) {
+            Some(k) => return Token::new(TokenKind::Symbol(k), chars.len()),
+            None => return Token::new(TokenKind::UNKNOWN, chars.len())
+        }
     }
 }
 
@@ -103,79 +107,151 @@ pub enum LiteralKind {
 // Token symbols. Complex symbols/operators are handled later.
 #[derive(Debug, Eq, PartialEq)]
 pub enum SymbolKind {
+    /// !
     Exclamation,
+    /// "
     Quotation,
+    /// #
     Number,
+    /// $
     Dollar,
+    /// %
     Percent,
+    /// &
     Ampersand,
+    /// '
     Apostrophe,
+    /// (
     LParen,
+    /// )
     RParen,
+    /// *
     Asterisk,
+    /// +
     Plus,
+    /// ,
     Comma,
+    /// -
     Hyphen,
+    /// .
     Dot,
+    /// /
     Slash,
+    /// :
     Colon,
+    /// ;
     Semicolon,
+    /// <
     Lesser,
+    /// =
     Equal,
+    /// >
     Greater,
+    /// ?
     Question,
+    /// @
     At,
+    /// [
     LSquare,
+    /// \
     Backslash,
+    /// ]
     RSquare,
+    /// ^
     Caret,
+    /// _
     Underscore,
+    /// `
     Accent,
+    /// {
     LCurly,
+    /// |
     Pipe,
+    /// }
     RCurly,
+    /// ~
     Tilde,
+
+    /// &&
+    And,
+    /// ||
+    Or,
+    /// ==
+    Equivalent,
+    /// !=
+    NotEquivalent,
+    /// <<
+    LeftShift,
+    /// <<<
+    LeftRotate,
+    /// >>
+    RightShift,
+    /// >>>
+    RightRotate,
+    /// +=
+    Incriment,
+    /// -=
+    Decriment,
+    /// ..
+    ExclusiveRange,
+    /// ..=
+    InclusiveRange,
+    
 
     UNKNOWN,
 }
 
 impl SymbolKind {
-    fn match_symbol(c: char) -> Self {
-        match c {
-        '!' => SymbolKind::Exclamation,
-        '"' => SymbolKind::Quotation,
-        '#' => SymbolKind::Number,
-        '$' => SymbolKind::Dollar,
-        '%' => SymbolKind::Percent,
-        '&' => SymbolKind::Ampersand,
-        '\'' => SymbolKind::Apostrophe,
-        '(' => SymbolKind::LParen,
-        ')' => SymbolKind::RParen,
-        '*' => SymbolKind::Asterisk,
-        '+' => SymbolKind::Plus,
-        ',' => SymbolKind::Comma,
-        '-' => SymbolKind::Hyphen,
-        '.' => SymbolKind::Dot,
-        '/' => SymbolKind::Slash,
-        ':' => SymbolKind::Colon,
-        ';' => SymbolKind::Semicolon,
-        '<' => SymbolKind::Lesser,
-        '=' => SymbolKind::Equal,
-        '>' => SymbolKind::Greater,
-        '?' => SymbolKind::Question,
-        '@' => SymbolKind::At,
-        '[' => SymbolKind::LSquare,
-        '\\' => SymbolKind::Backslash,
-        ']' => SymbolKind::RSquare,
-        '^' => SymbolKind::Caret,
-        '_' => SymbolKind::Underscore,
-        '`' => SymbolKind::Accent,
-        '{' => SymbolKind::LCurly,
-        '|' => SymbolKind::Pipe,
-        '}' => SymbolKind::RCurly,
-        '~' => SymbolKind::Tilde,
-        _ => SymbolKind::UNKNOWN, 
-    }
+    pub fn match_symbol(chars: &[char]) -> Option<Self> {
+        let k = match chars {
+            ['!'] => SymbolKind::Exclamation,
+            ['"'] => SymbolKind::Quotation,
+            ['#'] => SymbolKind::Number,
+            ['$'] => SymbolKind::Dollar,
+            ['%'] => SymbolKind::Percent,
+            ['&'] => SymbolKind::Ampersand,
+            ['\''] => SymbolKind::Apostrophe,
+            ['('] => SymbolKind::LParen,
+            [')'] => SymbolKind::RParen,
+            ['*'] => SymbolKind::Asterisk,
+            ['+'] => SymbolKind::Plus,
+            [','] => SymbolKind::Comma,
+            ['-'] => SymbolKind::Hyphen,
+            ['.'] => SymbolKind::Dot,
+            ['/'] => SymbolKind::Slash,
+            [':'] => SymbolKind::Colon,
+            [';'] => SymbolKind::Semicolon,
+            ['<'] => SymbolKind::Lesser,
+            ['='] => SymbolKind::Equal,
+            ['>'] => SymbolKind::Greater,
+            ['?'] => SymbolKind::Question,
+            ['@'] => SymbolKind::At,
+            ['['] => SymbolKind::LSquare,
+            ['\\'] => SymbolKind::Backslash,
+            [']'] => SymbolKind::RSquare,
+            ['^'] => SymbolKind::Caret,
+            ['_'] => SymbolKind::Underscore,
+            ['`'] => SymbolKind::Accent,
+            ['{'] => SymbolKind::LCurly,
+            ['|'] => SymbolKind::Pipe,
+            ['}'] => SymbolKind::RCurly,
+            ['~'] => SymbolKind::Tilde,
+            ['!', '='] => SymbolKind::NotEquivalent, 
+            ['&', '&'] => SymbolKind::And,
+            ['+', '='] => SymbolKind::Incriment,
+            ['-', '='] => SymbolKind::Decriment,
+            ['.', '.'] => Self::ExclusiveRange,
+            ['.', '.', '.'] => Self::InclusiveRange,
+            ['<', '<'] => SymbolKind::LeftShift,
+            ['<', '<', '<'] => SymbolKind::LeftRotate,
+            ['>', '>'] => Self::RightShift,
+            ['>', '>', '>'] => Self::RightRotate,
+            ['=', '='] => SymbolKind::Equivalent,
+            ['|', '|'] => SymbolKind::Or,
+            _ => SymbolKind::UNKNOWN, 
+        };
+        if k == SymbolKind::UNKNOWN { return None; }
+        Some(k)
     }
 }
 
